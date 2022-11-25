@@ -31,6 +31,7 @@ class SearchProblem:
         """
         Returns the start state for the search problem.
         """
+        util.raiseNotDefined()
 
     def isGoalState(self, state):
         """
@@ -38,6 +39,7 @@ class SearchProblem:
 
         Returns True if and only if the state is a valid goal state.
         """
+        util.raiseNotDefined()
 
     def getSuccessors(self, state):
         """
@@ -48,6 +50,7 @@ class SearchProblem:
         state, 'action' is the action required to get there, and 'stepCost' is
         the incremental cost of expanding to that successor.
         """
+        util.raiseNotDefined()
 
     def getCostOfActions(self, actions):
         """
@@ -56,6 +59,7 @@ class SearchProblem:
         This method returns the total cost of a particular sequence of actions.
         The sequence must be composed of legal moves.
         """
+        util.raiseNotDefined()
 
 class stateActions:
     def __init__(self, state, cost, nGoals=0, visited=[]):
@@ -93,11 +97,11 @@ def depthFirstSearch(problem: SearchProblem):
 
     nGoals = problem.isGoalState(problem.getStartState())
     if nGoals == True:
-        return []
+        return ["Stop"]
     elif nGoals == False:
         nGoals = 1
     stack = util.Stack()
-    return genericSearch(problem, stack, False, False)
+    return genericSearch(problem, stack, False, False, nGoals)
 
 
 def breadthFirstSearch(problem: SearchProblem):
@@ -105,22 +109,22 @@ def breadthFirstSearch(problem: SearchProblem):
 
     nGoals = problem.isGoalState(problem.getStartState())
     if nGoals == True:
-        return []
+        return ["Stop"]
     elif nGoals == False:
         nGoals = 1
     queue = util.Queue()
-    return genericSearch(problem, queue, False, False)
+    return genericSearch(problem, queue, False, False, nGoals)
 
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
     
     nGoals = problem.isGoalState(problem.getStartState())
     if nGoals == True:
-        return []
+        return ["Stop"]
     elif nGoals == False:
         nGoals = 1
     queue = util.PriorityQueue()
-    return genericSearch(problem, queue, True, False)
+    return genericSearch(problem, queue, True, False, nGoals)
 
 def nullHeuristic(state, problem=None):
     """
@@ -133,19 +137,19 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     nGoals = problem.isGoalState(problem.getStartState())
     if nGoals == True:
-        return []
+        return ["Stop"]
     elif nGoals == False:
         nGoals = 1
     queue = util.PriorityQueue()
-    return genericSearch(problem, queue, True, True, heuristic)
+    return genericSearch(problem, queue, True, True, nGoals, heuristic)
 
 
-def genericSearch(problem: SearchProblem, sq, prio, astar, heuristic=nullHeuristic):  #sq=stack or queue
-    #print(nGoals)
+def genericSearch(problem: SearchProblem, sq, prio, astar, nGoals, heuristic=nullHeuristic):  #sq=stack or queue
+    print(nGoals)
     visited = set()
     #print(problem.goal)
-    #visitedGoals = set()
-    #print(problem.getStartState())
+    visitedGoals = set()
+    print(problem.getStartState())
     sa = stateActions(problem.getStartState(), 0)
     if prio:
         sq.push(sa, 1)
@@ -154,15 +158,25 @@ def genericSearch(problem: SearchProblem, sq, prio, astar, heuristic=nullHeurist
 
     while(sq.isEmpty() == False):
         v = sq.pop()
-        #print(v.state)
-        isGoal = problem.isGoalState(v.state)
-        if  isGoal == True:
-            #print(v.actions)
-            return v.actions
+        print(v.state)
+        if v.state not in v.visitedGoals:
+            isGoal = problem.isGoalState(v.state)
+            if  isGoal == True:
+                print(v.state, "not in ", v.visitedGoals)
+                v.nGoals = v.nGoals + 1
+                v.visitedGoals.append(v.state)
+                #print(v.visitedGoals)
+                if v.nGoals == nGoals:
+                    print(v.actions)
+                    return v.actions
+                else:
+                    visited.clear()
+                    #visited = set(v.visitedGoals)
         if v.state not in visited:
             visited.add(v.state)
             for s in problem.getSuccessors(v.state):
-                sa = stateActions(s[0], v.cost+s[2])
+                #print("ABri em ", s[0])
+                sa = stateActions(s[0], v.cost+s[2], v.nGoals, v.visitedGoals)
                 sa.actions = v.actions.copy()
                 sa.actions.append(s[1])
                 if prio==True:
@@ -170,7 +184,7 @@ def genericSearch(problem: SearchProblem, sq, prio, astar, heuristic=nullHeurist
                         sq.push(sa, sa.cost)
                     else:
                         distance = heuristic(sa.state, problem)
-                        #print(distance)
+                        print(distance)
                         distance = distance + sa.cost
                         sq.push(sa, distance)
                 else:
